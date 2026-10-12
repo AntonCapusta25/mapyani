@@ -1,554 +1,202 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Our Netherlands Pop-Up Kitchens</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts (Inter) -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Leaflet.js CSS & JS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amsterdam & Enschede Restaurants - Food Spots Map</title>
+    <meta name="description"
+        content="Discover the best restaurants in Amsterdam and Enschede with interactive Leaflet map, districts, reviews, and filters.">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+
+    <!-- Leaflet.js -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    
-    <style>
-        @font-face {
-            font-family: 'NewSpirit';
-            src: url('https://firebasestorage.googleapis.com/v0/b/homemademeals-7040d.appspot.com/o/fonts%2FNewSpirit-BoldCondensed.ttf?alt=media&token=c8efe058-eff2-4ae3-937e-5ec9d0d760cd') format('truetype');
-            font-weight: bold;
-            font-style: normal;
-        }
-        
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background-color: #F8F9FA;
-            margin: 0;
-            padding: 0;
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
-        }
 
-        /* Custom scrollbar for premium sidebar feel */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #E4E4E7;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #D4D4D8;
-        }
+    <!-- Leaflet MarkerCluster -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
-        /* Glassmorphism Details Card */
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-        }
+    <!-- Leaflet Heat -->
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 
-        /* Pulse Animation for Map Marker Rings */
-        @keyframes custom-pulse {
-            0% {
-                transform: scale(0.85);
-                opacity: 0.7;
-            }
-            50% {
-                transform: scale(1.3);
-                opacity: 0.2;
-            }
-            100% {
-                transform: scale(0.85);
-                opacity: 0.7;
-            }
-        }
-
-        .glowing-marker {
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .glowing-marker-core {
-            width: 14px;
-            height: 14px;
-            background-color: #F47A42;
-            border: 2.5px solid #FFFFFF;
-            border-radius: 50%;
-            box-shadow: 0 0 12px rgba(244, 122, 66, 0.8);
-            z-index: 10;
-        }
-        .glowing-marker-ring {
-            position: absolute;
-            border-radius: 50%;
-            background-color: rgba(244, 122, 66, 0.2);
-            border: 1.5px solid rgba(244, 122, 66, 0.5);
-            animation: custom-pulse 2.5s infinite ease-in-out;
-            z-index: 5;
-        }
-
-        /* Brightened Leaflet Map filter to make canvas look incredibly clean and vibrant */
-        .bright-map {
-            filter: saturate(1.15) brightness(1.02) contrast(1.01);
-        }
-    </style>
+    <!-- App Styles -->
+    <link rel="stylesheet" href="./styles.css">
 </head>
-<body class="bg-[#F8F9FA]">
 
-    <!-- Main Container optimized for flexible presentation canvas ratios -->
-    <div class="w-full h-full bg-white overflow-hidden flex flex-col md:flex-row relative">
-        
-        <!-- Left Sidebar Controls -->
-        <div class="w-full md:w-[38%] lg:w-[32%] h-full bg-zinc-50 border-r border-zinc-100 flex flex-col overflow-hidden relative z-[1000]">
-            
-            <!-- Quick Stats Row directly matched to reference screenshots -->
-            <div class="p-4 md:p-6 pb-4 bg-white border-b border-zinc-100">
-                <div class="grid grid-cols-3 gap-3">
-                    <div class="bg-white rounded-2xl p-3 md:p-4 border border-zinc-100 text-center shadow-sm">
-                        <div class="text-2xl md:text-3xl font-black text-[#F47A42]" style="font-family: 'NewSpirit', sans-serif;">93</div>
-                        <div class="text-[10px] uppercase tracking-wider text-zinc-400 font-bold mt-1">Total Chefs</div>
-                    </div>
-                    <div class="bg-white rounded-2xl p-3 md:p-4 border border-zinc-100 text-center shadow-sm">
-                        <div class="text-2xl md:text-3xl font-black text-zinc-800" style="font-family: 'NewSpirit', sans-serif;">30</div>
-                        <div class="text-[10px] uppercase tracking-wider text-zinc-400 font-bold mt-1">Cities</div>
-                    </div>
-                    <div class="bg-white rounded-2xl p-3 md:p-4 border border-zinc-100 text-center shadow-sm">
-                        <div class="text-2xl md:text-3xl font-black text-zinc-800" style="font-family: 'NewSpirit', sans-serif;">10</div>
-                        <div class="text-[10px] uppercase tracking-wider text-zinc-400 font-bold mt-1">Provinces</div>
-                    </div>
-                </div>
+<body>
+    <!-- Animated Background -->
+    <div class="background-animation"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <span class="logo-icon">🍽️</span>
+                <h1 id="appHeaderTitle">Amsterdam & Enschede Restaurants</h1>
             </div>
 
-            <!-- Search Field -->
-            <div class="px-4 md:px-6 py-3 bg-zinc-50 border-b border-zinc-100">
-                <div class="relative">
-                    <input id="search-input" type="text" placeholder="Search city or chef specialties..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-zinc-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F47A42] transition-all shadow-sm">
-                    <svg class="absolute left-3.5 top-3.5 h-4 w-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </div>
+            <!-- City Switcher -->
+            <div class="city-toggle-container">
+                <button class="city-btn active" id="btnCityAmsterdam" onclick="selectCity('amsterdam')">
+                    🏛️ Amsterdam (4,976)
+                </button>
+                <button class="city-btn" id="btnCityEnschede" onclick="selectCity('enschede')">
+                    📍 Enschede (834)
+                </button>
             </div>
 
-            <!-- Leaderboard & Scrollable Area -->
-            <div id="city-list-container" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-3 md:space-y-4">
-                <div class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex justify-between px-1">
-                    <span>Coverage Leaderboard</span>
-                    <span>Chefs</span>
+            <div class="stats-bar" id="statsBar">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalRestaurants">0</div>
+                    <div class="stat-label">Restaurants</div>
                 </div>
-                <!-- Dynamic city list items will render here matching card layout -->
-            </div>
-            
-            <!-- Dynamic Branding Footer -->
-            <div class="p-4 bg-zinc-100 border-t border-zinc-200 flex items-center justify-between text-xs text-zinc-500">
-                <span>Data Ref: Active June 2026</span>
-                <span class="font-bold text-[#F47A42]" style="font-family: 'NewSpirit', sans-serif;">Homemade Live Map</span>
+                <div class="stat-item">
+                    <div class="stat-value" id="avgRating">0</div>
+                    <div class="stat-label">Avg Rating</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="totalReviews">0</div>
+                    <div class="stat-label">Reviews</div>
+                </div>
             </div>
         </div>
+    </header>
 
-        <!-- Interactive Map Container -->
-        <div class="flex-1 h-full relative">
-            <div id="map" class="w-full h-full bg-zinc-100 bright-map"></div>
+    <!-- Main Container -->
+    <main class="container">
+        <!-- Controls -->
+        <section class="controls">
+            <div class="controls-grid">
+                <div class="control-group">
+                    <label for="searchInput">🔍 Search</label>
+                    <input type="text" id="searchInput" placeholder="Search by name, address, or cuisine...">
+                </div>
 
-            <!-- Floating Translucent Details overlay card -->
-            <div id="detail-card" class="absolute bottom-6 left-6 right-6 md:right-auto md:w-[420px] glass-panel rounded-3xl p-6 shadow-2xl z-[1000] transform translate-y-12 opacity-0 pointer-events-none transition-all duration-300">
-                <div class="flex justify-between items-start mb-4">
-                    <div>
-                        <span id="detail-province" class="text-[10px] uppercase font-bold tracking-widest text-[#F47A42]"></span>
-                        <h2 id="detail-city" class="text-2xl font-extrabold text-zinc-900 leading-tight" style="font-family: 'NewSpirit', sans-serif;"></h2>
-                    </div>
-                    <button id="close-detail" class="text-zinc-400 hover:text-zinc-600 p-2 hover:bg-zinc-100/80 rounded-full transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                <div class="control-group">
+                    <label for="districtFilter">📍 District / Area</label>
+                    <select id="districtFilter">
+                        <option value="">All Districts</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="cuisineFilter">🍴 Cuisine Type</label>
+                    <select id="cuisineFilter">
+                        <option value="">All Cuisines</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="minRating">⭐ Minimum Rating</label>
+                    <select id="minRating">
+                        <option value="">Any Rating</option>
+                        <option value="4.5">4.5+ Stars</option>
+                        <option value="4.0">4.0+ Stars</option>
+                        <option value="3.5">3.5+ Stars</option>
+                        <option value="3.0">3.0+ Stars</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="sortBy">📊 Sort By</label>
+                    <select id="sortBy">
+                        <option value="rating">Highest Rating</option>
+                        <option value="reviews">Most Reviews</option>
+                        <option value="name">Name (A-Z)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn btn-primary" id="applyFilters">
+                    ✨ Apply Filters
+                </button>
+                <button class="btn btn-secondary" id="resetFilters">
+                    🔄 Reset
+                </button>
+            </div>
+        </section>
+
+        <!-- Map Section with Interactive Layer Controls -->
+        <section class="map-section" style="position: relative;">
+            <div class="hz-live-map__controls" style="position: absolute; top: 16px; left: 16px; z-index: 1000; display: flex; gap: 8px; align-items: center; background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(10px); padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.18); box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+                <div class="hz-map-tabs" style="display: flex; gap: 6px;">
+                    <button type="button" class="hz-map-tab" id="btnTabAll" onclick="setMapMode('all')" style="display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 999px; border: none; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">map</span>
+                        <span>Districts & Venues</span>
+                    </button>
+                    <button type="button" class="hz-map-tab" id="btnTabDistricts" onclick="setMapMode('districts')" style="display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 999px; border: none; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; background: transparent; color: #a0aec0;">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">grid_view</span>
+                        <span>Districts Only</span>
+                    </button>
+                    <button type="button" class="hz-map-tab" id="btnTabHeatmap" onclick="setMapMode('heatmap')" style="display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 999px; border: none; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; background: transparent; color: #a0aec0;">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">layers</span>
+                        <span>Heatmap</span>
                     </button>
                 </div>
+            </div>
 
-                <!-- List of chefs in the selected city -->
-                <div id="detail-chefs-list" class="space-y-3 max-h-[220px] overflow-y-auto pr-1">
-                    <!-- Dynamic popup contents -->
+            <div id="map" style="height: 800px !important; width: 100%;"></div>
+        </section>
+
+        <!-- Active District Filter Banner -->
+        <div id="activeDistrictBanner" style="display: none; align-items: center; justify-content: space-between; background: linear-gradient(135deg, rgba(102, 126, 234, 0.25) 0%, rgba(118, 75, 162, 0.25) 100%); border: 1px solid rgba(102, 126, 234, 0.6); padding: 12px 20px; border-radius: 12px; margin: 15px 0 20px 0;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 1.5rem;">📍</span>
+                <div>
+                    <div style="font-weight: 700; color: #ffffff; font-size: 1rem;" id="activeDistrictTitle">Filtered by District</div>
+                    <div style="font-size: 0.82rem; color: #cbd5e1;" id="activeDistrictSubtitle">Showing venues in this area</div>
                 </div>
             </div>
+            <button onclick="clearDistrictFilter()" style="padding: 7px 16px; background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.35); border-radius: 999px; color: #fff; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+                ✕ Clear District Filter
+            </button>
         </div>
-    </div>
 
-    <script>
-        // High fidelity platform data for the 30 active cities in the Netherlands
-        const platformData = {
-            "Amsterdam": {
-                lat: 52.3676, lng: 4.9041, count: 24, province: "North Holland",
-                chefs: [
-                    { name: "Amsterdam Agave 🌵", specialty: "Agave Street Tacos, Lime Wedges", rating: 4.9 },
-                    { name: "ATK Kitchen", specialty: "Turkish Pide, Warm Flatbreads", rating: 4.8 },
-                    { name: "Kitchen of Rissa", specialty: "Enchiladas, Taco Tuesday Plates", rating: 4.7 },
-                    { name: "Bangaliana", specialty: "Traditional Bengali curries, Hilsa Fish Fry", rating: 4.8 },
-                    { name: "Visit Ghana Cuisine", specialty: "Banku with Tilapia, Waakye Rice", rating: 4.9 }
-                ]
-            },
-            "Enschede": {
-                lat: 52.2215, lng: 6.8937, count: 12, province: "Overijssel",
-                chefs: [
-                    { name: "Spice Road", specialty: "Comfort Vegetarian Thali, Samosa Chaat", rating: 4.9 },
-                    { name: "B's African Kitchen", specialty: "Nigerian Puff-Puff, Egusi Soup", rating: 4.8 },
-                    { name: "Hibiscuits", specialty: "Traditional Atayef Pancakes, Treats", rating: 4.7 }
-                ]
-            },
-            "Den Haag": {
-                lat: 52.0705, lng: 4.3007, count: 8, province: "South Holland",
-                chefs: [
-                    { name: "Almatbakh Cuisine", specialty: "Homemade Beef Shawarma Wraps", rating: 4.9 },
-                    { name: "Armandos' Kitchen", specialty: "Pasta Arrabbiata, Classic Pesto", rating: 4.6 },
-                    { name: "Clay Handi Kitchen", specialty: "Murgh Cholay, Stuffed Parathas", rating: 4.8 }
-                ]
-            },
-            "Rotterdam": {
-                lat: 51.9225, lng: 4.4792, count: 7, province: "South Holland",
-                chefs: [
-                    { name: "Ammi’s Kitchen", specialty: "Lamb Karahi, Shahi Chicken Korma", rating: 5.0 },
-                    { name: "Bottega da Dome", specialty: "Handcrafted Stroopwafel Tiramisù", rating: 4.9 },
-                    { name: "Jor's Kitchen", specialty: "Hollandse Kippendijen Pastei", rating: 4.7 }
-                ]
-            },
-            "Haarlem": {
-                lat: 52.3874, lng: 4.6462, count: 5, province: "North Holland",
-                chefs: [
-                    { name: "Da Vincenzo", specialty: "Classic Italian Tiramisù, Sandwiches", rating: 4.9 },
-                    { name: "Sweet Bakery Haarlem", specialty: "Fresh croissants, Strawberry Cakes", rating: 4.8 }
-                ]
-            },
-            "Delft": {
-                lat: 52.0116, lng: 4.3571, count: 4, province: "South Holland",
-                chefs: [
-                    { name: "Dranol Foods", specialty: "Pepper stew, Ayamase stew, Fried Beef", rating: 4.7 }
-                ]
-            },
-            "Utrecht": {
-                lat: 52.0907, lng: 5.1214, count: 3, province: "Utrecht",
-                chefs: [
-                    { name: "The Spices of India", specialty: "Stuffed Paneer Pyaaz Paratha", rating: 4.8 }
-                ]
-            },
-            "Lelystad": {
-                lat: 52.5185, lng: 5.4714, count: 2, province: "Flevoland",
-                chefs: [
-                    { name: "Adinkra Flavors", specialty: "Fluffy Basmati Rice, Mutton Biryani", rating: 4.9 }
-                ]
-            },
-            "Arnhem": {
-                lat: 51.9851, lng: 5.8987, count: 2, province: "Gelderland",
-                chefs: [
-                    { name: "Astro Kitchen", specialty: "Hearth Parathas, Veggie Platters", rating: 4.8 }
-                ]
-            },
-            "Zaandam": {
-                lat: 52.4420, lng: 4.8292, count: 2, province: "North Holland",
-                chefs: [
-                    { name: "Healthy Zaandam Bites", specialty: "Traditional Greek Bowls", rating: 4.9 }
-                ]
-            },
-            "Almere": {
-                lat: 52.3508, lng: 5.2647, count: 2, province: "Flevoland",
-                chefs: [
-                    { name: "Amar Bangla", specialty: "Pani Puri Street Shots", rating: 4.7 }
-                ]
-            },
-            "Breda": {
-                lat: 51.5719, lng: 4.7683, count: 1, province: "North Brabant",
-                chefs: [
-                    { name: "Ann's Shades of Taste", specialty: "Pounded Yam with Okra Soup", rating: 4.9 }
-                ]
-            },
-            "Leiden": {
-                lat: 52.1601, lng: 4.4970, count: 1, province: "South Holland",
-                chefs: [
-                    { name: "Bites & Gather", specialty: "Authentic Ugandan Rolex wraps", rating: 4.8 }
-                ]
-            },
-            "Meppel": {
-                lat: 52.6948, lng: 6.1989, count: 1, province: "Drenthe",
-                chefs: [
-                    { name: "The Maestro of Meppel", specialty: "Homemade Garlic Focaccia", rating: 4.6 }
-                ]
-            },
-            "Maastricht": {
-                lat: 50.8514, lng: 5.6910, count: 1, province: "Limburg",
-                chefs: [
-                    { name: "Limburgs Finest", specialty: "Traditional stewed meats", rating: 4.7 }
-                ]
-            },
-            "Uithoorn": {
-                lat: 52.2415, lng: 4.8329, count: 1, province: "North Holland",
-                chefs: [
-                    { name: "Uithoorn Delicacies", specialty: "Gourmet Home Baked Treat Boxes", rating: 4.8 }
-                ]
-            },
-            "Haren": {
-                lat: 53.1702, lng: 6.6022, count: 1, province: "Groningen",
-                chefs: [
-                    { name: "Haren Local Flavor", specialty: "Fresh Seasonal Garden Dinners", rating: 4.9 }
-                ]
-            },
-            "Veenendaal": {
-                lat: 52.0250, lng: 5.5550, count: 1, province: "Utrecht",
-                chefs: [
-                    { name: "Veenendaal Bistro", specialty: "Crispy Samosas & Mint Chutneys", rating: 4.7 }
-                ]
-            },
-            "Gouda": {
-                lat: 52.0116, lng: 4.7105, count: 1, province: "South Holland",
-                chefs: [
-                    { name: "Bombay Bites", specialty: "Dhaba Daal Tadka & Flaky Naan", rating: 4.8 }
-                ]
-            },
-            "Harderwijk": {
-                lat: 52.3510, lng: 5.6200, count: 1, province: "Gelderland",
-                chefs: [
-                    { name: "Harderwijk Hearth", specialty: "Artisanal Pies & Scones", rating: 4.6 }
-                ]
-            },
-            "Purmerend": {
-                lat: 52.5050, lng: 4.9587, count: 1, province: "North Holland",
-                chefs: [
-                    { name: "Beirut Bites", specialty: "Savory Arabic pastries & wraps", rating: 4.8 }
-                ]
-            },
-            "Heino": {
-                lat: 52.4347, lng: 6.2325, count: 1, province: "Overijssel",
-                chefs: [
-                    { name: "Overijssel Bakers", specialty: "Cakes, Scones & Custom Sweet Platters", rating: 4.9 }
-                ]
-            },
-            "Almelo": {
-                lat: 52.3551, lng: 6.6637, count: 1, province: "Overijssel",
-                chefs: [
-                    { name: "Almelo Curry Point", specialty: "Butter Chicken & Rice combos", rating: 4.7 }
-                ]
-            },
-            "Helmond": {
-                lat: 51.4792, lng: 5.6570, count: 1, province: "North Brabant",
-                chefs: [
-                    { name: "Helmond Kitchen Hub", specialty: "Pounded Yam & Egusi stews", rating: 4.8 }
-                ]
-            },
-            "Hilversum": {
-                lat: 52.2233, lng: 5.1764, count: 1, province: "North Holland",
-                chefs: [
-                    { name: "Media City Meals", specialty: "Vegan Lemon Bowls & Veggie Gyozas", rating: 4.9 }
-                ]
-            },
-            "Wierden": {
-                lat: 52.3586, lng: 6.5910, count: 1, province: "Overijssel",
-                chefs: [
-                    { name: "Wierden Sweet bakes", specialty: "Oven fresh pastry rolls & cakes", rating: 4.8 }
-                ]
-            },
-            "Schiedam": {
-                lat: 51.9167, lng: 4.4000, count: 1, province: "South Holland",
-                chefs: [
-                    { name: "Schiedam Bites", specialty: "Traditional homemade pasta baskets", rating: 4.7 }
-                ]
-            },
-            "Hengelo": {
-                lat: 52.2653, lng: 6.7932, count: 1, province: "Overijssel",
-                chefs: [
-                    { name: "Hengelo spice road", specialty: "Vada Pav & Vegetable samosas", rating: 4.9 }
-                ]
-            },
-            "Hazerswoude-Rijndijk": {
-                lat: 52.1292, lng: 4.5937, count: 1, province: "South Holland",
-                chefs: [
-                    { name: "Rijndijk Local chef", specialty: "Comfort healthy meal prep lunches", rating: 4.8 }
-                ]
-            },
-            "Bohemian Lotus": {
-                lat: 52.3421, lng: 4.8112, count: 1, province: "North Holland",
-                chefs: [
-                    { name: "Bohemian Lotus", specialty: "Miso glazed eggplant & gyozas", rating: 4.9 }
-                ]
-            }
-        };
+        <section class="filters-section">
+            <div class="header-controls">
+                <button id="reloadData" class="btn btn-secondary">
+                    🔄 Reload Data
+                </button>
+                <button id="exportData" class="btn btn-primary">
+                    📥 Export CSV
+                </button>
+            </div>
+        </section>
 
-        // Initialize bright tilemap system
-        const map = L.map('map', {
-            zoomControl: false,
-            attributionControl: false
-        }).setView([52.25, 5.4], 7.5);
+        <!-- Results Info -->
+        <div class="results-info">
+            <div class="results-count">
+                Showing <span id="resultsCount">0</span> restaurants
+            </div>
+        </div>
 
-        // Standard crisp white light maps tile layer
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            maxZoom: 19
-        }).addTo(map);
+        <!-- Loading State -->
+        <div class="loading" id="loadingState" style="display: none;">
+            <div class="spinner"></div>
+            <p>Loading restaurants...</p>
+        </div>
 
-        // Fetch and draw provincial boundaries as dashed vector overlays
-        fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries/NLD/provinces.geo.json')
-            .then(res => res.json())
-            .then(geoData => {
-                L.geoJSON(geoData, {
-                    style: function(feature) {
-                        return {
-                            color: '#F47A42',
-                            weight: 1.5,
-                            opacity: 0.45,
-                            fillColor: '#F47A42',
-                            fillOpacity: 0.015,
-                            dashArray: '5, 6'
-                        };
-                    }
-                }).addTo(map);
-            });
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <div class="empty-icon">🍽️</div>
+            <h2>No restaurants found</h2>
+            <p>Try adjusting your filters or search criteria</p>
+        </div>
 
-        const markers = {};
-        const maxChefCount = 24; // Amsterdam maximum count for scaling math
+        <!-- Restaurants Grid -->
+        <div class="restaurants-grid" id="restaurantsGrid"></div>
+    </main>
 
-        // Function to create proportional, highly-visible pulsing city markers
-        function createCityIcon(count) {
-            // Highly dramatic scaling: scales aggressively up to 135px for massive density hubs
-            const size = Math.max(22, 18 + (count * 4.8));
-            // Translucency of the outer halo subtly deepens as density increases
-            const haloOpacity = Math.min(0.5, 0.15 + (count * 0.012));
-            const borderOpacity = Math.min(0.8, 0.3 + (count * 0.015));
-            
-            return L.divIcon({
-                className: 'glowing-marker-container',
-                html: `
-                    <div class="glowing-marker" style="width: ${size}px; height: ${size}px;">
-                        <div class="glowing-marker-ring" style="width: ${size}px; height: ${size}px; background-color: rgba(244, 122, 66, ${haloOpacity}); border: 1.5px solid rgba(244, 122, 66, ${borderOpacity});"></div>
-                        <div class="glowing-marker-core"></div>
-                    </div>
-                `,
-                iconSize: [size, size],
-                iconAnchor: [size/2, size/2]
-            });
-        }
-
-        // Insert markers on the Leaflet instance
-        Object.keys(platformData).forEach(cityName => {
-            const data = platformData[cityName];
-            const marker = L.marker([data.lat, data.lng], {
-                icon: createCityIcon(data.count)
-            }).addTo(map);
-
-            // Bind crisp elegant tooltips
-            marker.bindTooltip(`
-                <div class="px-3 py-1.5 text-xs font-semibold text-zinc-900 bg-white rounded-xl shadow-md border border-zinc-100/80 flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-[#F47A42]"></span>
-                    <span><b>${cityName}</b>: ${data.count} chef${data.count > 1 ? 's' : ''}</span>
-                </div>
-            `, {
-                direction: 'top',
-                offset: [0, -12],
-                opacity: 1.0,
-                className: 'bg-transparent border-none shadow-none'
-            });
-
-            marker.on('click', () => {
-                selectCity(cityName);
-            });
-
-            markers[cityName] = marker;
-        });
-
-        // Renders visual leaderboard matched perfectly to the provided snapshot specifications
-        function renderCityList(filter = '') {
-            const container = document.getElementById('city-list-container');
-            container.innerHTML = `
-                <div class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex justify-between px-1 mb-2">
-                    <span>Coverage Leaderboard</span>
-                    <span>Chefs</span>
-                </div>
-            `;
-
-            const query = filter.toLowerCase();
-            const sortedCities = Object.keys(platformData)
-                .filter(city => city.toLowerCase().includes(query) || 
-                    platformData[city].chefs.some(c => c.name.toLowerCase().includes(query) || c.specialty.toLowerCase().includes(query)))
-                .sort((a, b) => platformData[b].count - platformData[a].count);
-
-            sortedCities.forEach(city => {
-                const data = platformData[city];
-                const card = document.createElement('div');
-                card.className = "bg-white p-4 rounded-2xl border border-zinc-200/60 shadow-sm hover:shadow-md cursor-pointer transition-all duration-200 flex justify-between items-center group relative overflow-hidden";
-                
-                // Construct structure exactly matching Screenshot reference
-                card.innerHTML = `
-                    <div class="flex-1 min-w-0 pr-4">
-                        <span class="text-[9px] uppercase tracking-wider font-extrabold text-zinc-400 group-hover:text-[#F47A42] transition-colors">${data.province}</span>
-                        <h3 class="text-sm md:text-base font-extrabold text-zinc-800 tracking-tight leading-snug mt-0.5">${city}</h3>
-                        <!-- Decorative Brand Bar directly below the City Title matching reference -->
-                        <div class="w-8 h-1 bg-[#F47A42] rounded-full mt-2 transition-all duration-300 group-hover:w-16"></div>
-                    </div>
-                    <div class="shrink-0">
-                        <span class="px-3.5 py-1.5 text-xs font-black bg-zinc-100 text-zinc-700 rounded-full group-hover:bg-orange-50 group-hover:text-[#F47A42] transition-colors">
-                            ${data.count}
-                        </span>
-                    </div>
-                `;
-
-                card.addEventListener('click', () => {
-                    selectCity(city);
-                });
-
-                container.appendChild(card);
-            });
-        }
-
-        // Action triggered when focusing a specific city node
-        function selectCity(cityName) {
-            const data = platformData[cityName];
-            if (!data) return;
-
-            // Pan/Fly map smoothly using animated transition coordinates offset slightly north
-            map.flyTo([data.lat - 0.04, data.lng], 10, {
-                animate: true,
-                duration: 1.4
-            });
-
-            // Populate the floating card overlay with beautiful listings
-            const card = document.getElementById('detail-card');
-            document.getElementById('detail-province').innerText = data.province;
-            document.getElementById('detail-city').innerText = cityName;
-
-            const chefsList = document.getElementById('detail-chefs-list');
-            chefsList.innerHTML = '';
-
-            data.chefs.forEach(chef => {
-                const chefRow = document.createElement('div');
-                chefRow.className = "p-4 bg-white/80 border border-zinc-200/50 rounded-2xl hover:bg-white transition-all flex items-start gap-3.5 shadow-sm";
-                chefRow.innerHTML = `
-                    <div class="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-sm font-bold text-[#F47A42] shrink-0 border border-orange-100">
-                        ${chef.name.substring(0, 2).toUpperCase()}
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex justify-between items-center">
-                            <h4 class="text-sm font-bold text-zinc-800 truncate">${chef.name}</h4>
-                            <span class="text-[11px] font-bold text-amber-600 flex items-center gap-0.5">⭐ ${chef.rating}</span>
-                        </div>
-                        <p class="text-[11px] text-zinc-500 truncate mt-1">${chef.specialty}</p>
-                    </div>
-                `;
-                chefsList.appendChild(chefRow);
-            });
-
-            card.classList.remove('opacity-0', 'translate-y-12', 'pointer-events-none');
-            card.classList.add('opacity-100', 'translate-y-0');
-        }
-
-        // Close Pop-Up details frame
-        document.getElementById('close-detail').addEventListener('click', () => {
-            const card = document.getElementById('detail-card');
-            card.classList.remove('opacity-100', 'translate-y-0');
-            card.classList.add('opacity-0', 'translate-y-12', 'pointer-events-none');
-            map.setView([52.25, 5.4], 7.5);
-        });
-
-        // Initialize user interaction controls
-        document.getElementById('search-input').addEventListener('input', (e) => {
-            renderCityList(e.target.value);
-        });
-
-        // Fire initial render sequence
-        renderCityList();
-    </script>
+    <!-- JavaScript -->
+    <script src="./app.js"></script>
 </body>
+
 </html>
